@@ -61,3 +61,4 @@ $ nix run .#install -- --target root@server
 - Issues: <https://github.com/ojuny-project/ojuny-ci-server/issues>
 - Contributing: [CONTRIBUTING.md](CONTRIBUTING.md)
 - Security: [SECURITY.md](SECURITY.md)
+
