@@ -42,6 +42,7 @@ let
       "nix-cache-discovery"
       "nix-cleaner"
       "nix-settings-gui"
+      "ojuny-welcome"
       "nix-regedit"
       "nix-shell-gui"
       "simple-nix-update-gui"
