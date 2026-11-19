@@ -8,7 +8,7 @@ Run this on the workstation before provisioning.
 $ nix flake lock
 ```
 
-This creates `flake.lock`. Commit it.
+This updates `flake.lock`. Commit it.
 
 ## 2. Set the required settings
 
@@ -26,16 +26,19 @@ Open the flake in `nix-settings-gui` and set:
 Optional:
 
 - `ci.git.repositories` if a repository name differs
+- `ci.jobs.extraRepositories` for forks and revision-specific CI
 - `ci.storage.mounts` for extra local or network filesystems
 - `ci.builders` for remote builders
 
 ## 3. Evaluate the flake
 
 ```console
+$ nix run .#check
 $ nix flake check
 ```
 
-If this fails, fix the evaluation before provisioning. The likely causes are:
+The first command runs the Ojuny template check. If either command fails, fix
+the evaluation before provisioning. The likely causes are:
 
 - a setting that points at a missing package or option
 - an interface name that conflicts with the network module

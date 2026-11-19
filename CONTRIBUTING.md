@@ -19,6 +19,12 @@ scripts, state the manual test you ran in the pull request.
 - Keep settings annotations in plain attribute sets or `lib.mkIf` sets. Do not
   put `@option` inside `lib.mkMerge`, a list, `map`, `forEach` or
   `lib.optionalAttrs`.
+- Every file with an `@option` needs a `@menu` header. The
+  `check-menu-coverage` gate in `checks/options_coverage.py` rejects a file
+  that has annotations but no menu.
+- Keep the five installer modules declared: `host-imports`,
+  `system-configuration`, `users`, `system-hardware` and `system-bootloader`.
+  The `checks.template` gate runs the Ojuny template check.
 - Do not commit secrets. Use the documented file-based options.
 - Do not add a hardcoded organization or repository owner.
 - Do not make a heavy job a required path for a default deployment.
@@ -31,8 +37,9 @@ $ nix flake check --no-build
 $ nix build .#checks.x86_64-linux.default
 ```
 
-The checks include `settings-eval`, `jobsets-schema`, `storage-assertions` and
-`options-coverage`.
+The checks include `settings-eval`, `jobsets-schema`, `storage-assertions`,
+`options-coverage` and `template`. `options-coverage` also runs the
+`check-menu-coverage` gate.
 
 ## Issues
 

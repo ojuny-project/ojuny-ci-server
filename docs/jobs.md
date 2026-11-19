@@ -54,7 +54,28 @@ $ nix build .#packages.x86_64-linux.jobsets-json
 $ nix store cat result
 ```
 
-## Adding a repository
+## Extra repositories
+
+Add a repository outside the standard list with `ci.jobs.extraRepositories`.
+Each row names the repository, gives its flake ref or Git URL, optionally names
+a branch or revision, and lists the job groups:
+
+```nix
+ci.jobs.extraRepositories = [
+  {
+    name = "my-ojuny-template";
+    url = "github:me/ojuny-template";
+    ref = "my-branch";
+    groups = "checks vmTests";
+  }
+];
+```
+
+The jobset name is `<group>-<name>`. Duplicate names, an empty URL, an unknown
+group or an empty group list fail evaluation. A row on a fork of
+`ojuny-template` is the supported way to test a specific template version.
+
+## Adding a standard repository
 
 Add the repository name to the relevant group in `lib/jobsets.nix` and make
 sure the repository exposes `hydraJobs`. Rebuild the server.

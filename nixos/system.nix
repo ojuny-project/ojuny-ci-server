@@ -6,19 +6,14 @@
 }:
 
 {
-  networking.hostName = config.ci.hostName;
-  networking.domain = config.ci.domain;
-  time.timeZone = config.ci.timeZone;
-  i18n.defaultLocale = config.ci.locale;
-  system.stateVersion = "26.11";
+  environment.etc."ojuny/flake-path".text = config.ojuny.repoPath;
 
   users.mutableUsers = false;
-  users.users.${config.ci.adminUser} = {
-    isNormalUser = true;
-    extraGroups = [ "wheel" ];
-    hashedPassword = config.ci.adminHashedPassword;
-    openssh.authorizedKeys.keys = config.ci.ssh.authorizedKeys;
-  };
+  users.groups.networkmanager = { };
+  environment.shells = [
+    pkgs.zsh
+    pkgs.fish
+  ];
 
   services.openssh = {
     enable = true;

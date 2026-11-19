@@ -12,8 +12,16 @@ this flake. The server receives the built system only.
 5. Run `nix run .#install -- --target root@server` or
    `nix run .#provision -- --target root@server --disk /dev/vda`.
 
-The GUI writes the annotated defaults in `modules/`. The option declarations
-and the annotated defaults are in plain attribute sets so the controls render.
+The GUI writes the annotated defaults in `nixos/`. The option declarations and
+the annotated defaults are in plain attribute sets so the controls render.
+`modules/` holds the flake-parts module declarations that the installers rewrite.
+
+An installer writes `networking.hostName`, `system.stateVersion` and
+`ojuny.repoPath` into `modules/00-system.nix`. Those plain assignments take
+precedence over the `lib.mkDefault` values that follow the GUI options, so keep
+`ci.hostName` equal to the installed hostname when Hydra URLs must match it.
+The Disk page drives the disko layout for `provision`; an installer ISO uses the
+layout chosen in the installer.
 
 ## The central setting
 
@@ -31,6 +39,26 @@ ci.git.repositories = {
 ```
 
 The generator uses `ci.git.repositories.<standard>.name or <standard>`.
+
+## Extra CI repositories
+
+`ci.jobs.extraRepositories` adds a repository outside the standard list. Each
+row carries a name, a flake ref or Git URL, an optional ref, and the job groups:
+
+```nix
+ci.jobs.extraRepositories = [
+  {
+    name = "my-ojuny-template";
+    url = "github:me/ojuny-template";
+    ref = "my-branch";
+    groups = "checks vmTests";
+  }
+];
+```
+
+`ref` is appended to `github:`, `gitlab:` and `sourcehut:` refs, and passed as
+`?ref=` for other URLs. `groups` is a space-separated list of the job group
+names. The row appears under Jobs in the GUI.
 
 ## Git host and protocol
 

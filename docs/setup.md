@@ -7,20 +7,30 @@
 - SSH access to the target.
 - The target disk name for a fresh install.
 
-## Pin the inputs
+## Setup app
 
-The repository has no committed `flake.lock` until the first evaluation. Pin
-the inputs once on the workstation:
+Fork the repository, then run the setup app from the upstream flake:
 
 ```console
-$ nix flake lock
+$ nix run .#setup
+```
+
+The app clones the fork, writes the admin account and SSH keys, sets the
+hostname and target disk, and prints the provision and install commands.
+
+## Pin the inputs
+
+The repository tracks `flake.lock`. Update it on a fork with:
+
+```console
+$ nix flake update
 ```
 
 
 ## Edit the settings
 
 Open this directory in `nix-settings-gui` on the workstation. The pages are
-generated from the `@menu` and `@option` comments in `modules/`.
+generated from the `@menu` and `@option` comments in `nixos/`.
 
 At minimum set:
 
@@ -54,6 +64,24 @@ $ nix run .#install -- --target root@server
 ```
 
 The script requires `INSTALL` and runs `nixos-rebuild switch --flake .#ci`.
+
+## Remote deploy
+
+Update a machine that already runs NixOS or Ojuny over SSH:
+
+```console
+$ nix run .#remote-setup -- --target root@server
+```
+
+Install a fresh machine without the ISO:
+
+```console
+$ nix run .#remote-install -- --target root@server --disk /dev/vda
+```
+
+`remote-install` prepares a disko repository with
+`prepare-remote-repository` first. Both apps are the standard Ojuny deploy
+apps, so the same commands work on the other Ojuny templates.
 
 ## Proxmox image
 

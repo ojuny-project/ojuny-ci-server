@@ -53,7 +53,7 @@
 
     hostName = lib.mkOption {
       type = lib.types.str;
-      default = "ojuny-ci";
+      default = "ci";
       description = "Server hostname.";
     };
 
@@ -119,7 +119,7 @@
     ci.git.repositories = { };
 
     /* @option widget = "text"; label = "Hostname"; group = "Host"; */
-    ci.hostName = "ojuny-ci";
+    ci.hostName = "ci";
 
     /* @option widget = "text"; label = "Domain"; group = "Host"; */
     ci.domain = "lan";

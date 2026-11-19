@@ -1,0 +1,165 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+REPO_ROOT="${OJUNY_ROOT:-$PWD}"
+HELPER="$REPO_ROOT/scripts/flake_structure.py"
+OUT="$(python3 "$HELPER" --root "$REPO_ROOT" --non-interactive path --module hardware --fallback modules/00-hardware.nix)"
+
+force=0
+for arg in "$@"; do
+  case "$arg" in
+  --force) force=1 ;;
+  *)
+    echo "generate-hw: unknown argument: $arg" >&2
+    exit 2
+    ;;
+  esac
+done
+
+if [ -e "$OUT" ] && [ "$force" -ne 1 ]; then
+  echo "generate-hw: refusing to overwrite $OUT (pass --force)" >&2
+  exit 1
+fi
+
+if [ -f /etc/nixos/hardware-configuration.nix ]; then
+  echo "generate-hw: reusing /etc/nixos/hardware-configuration.nix"
+  raw="$(cat /etc/nixos/hardware-configuration.nix)"
+else
+  echo "generate-hw: running nixos-generate-config --show-hardware-config"
+  raw="$(nixos-generate-config --show-hardware-config)"
+fi
+
+# Pick the bootloader: UEFI probe first, the existing configuration.nix
+# second, ask as a last resort.
+if [ -d /sys/firmware/efi ]; then
+  bootloader=efi
+elif [ -f /etc/nixos/configuration.nix ] &&
+  grep -Eq 'boot\.loader\.systemd-boot\.enable[[:space:]]*=[[:space:]]*true' /etc/nixos/configuration.nix; then
+  bootloader=efi
+elif [ -f /etc/nixos/configuration.nix ] &&
+  grep -Eq 'boot\.loader\.grub' /etc/nixos/configuration.nix; then
+  bootloader=bios
+elif [ -d /sys/firmware ]; then
+  bootloader=bios
+else
+  read -rp "Bootloader? [1] systemd-boot (UEFI) [2] grub (BIOS) [2]: " boot_answer
+  case "$boot_answer" in
+  1 | efi | systemd-boot) bootloader=efi ;;
+  *) bootloader=bios ;;
+  esac
+fi
+
+if [ "$bootloader" = efi ]; then
+  boot_module='
+    boot.loader.systemd-boot.enable = true;
+    boot.loader.efi.canTouchEfiVariables = true;'
+  if findmnt -no SOURCE /efi >/dev/null 2>&1; then
+    boot_source="$(findmnt -no SOURCE /boot 2>/dev/null || true)"
+    if [ -n "$boot_source" ] &&
+      [ "$(lsblk -no PARTTYPE "$boot_source" 2>/dev/null || true)" = "bc13c2ff-59e6-4262-a352-b275fd6f7172" ]; then
+      boot_module="$boot_module
+    boot.loader.efi.efiSysMountPoint = \"/efi\";
+    boot.loader.systemd-boot.xbootldrMountPoint = \"/boot\";"
+    fi
+  fi
+else
+  disk=""
+  root_source="$(findmnt -no SOURCE / 2>/dev/null || true)"
+  if [ -n "$root_source" ]; then
+    parent="$(lsblk -no PKNAME "$root_source" 2>/dev/null | head -n1 || true)"
+    if [ -n "$parent" ]; then disk="/dev/$parent"; else disk="$root_source"; fi
+  fi
+  if [ -z "$disk" ] && [ -f /etc/nixos/configuration.nix ]; then
+    disk="$(sed -n 's/.*boot\.loader\.grub\.device[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' /etc/nixos/configuration.nix | head -n1)"
+  fi
+  if [ -z "$disk" ]; then
+    read -rp "Disk to install grub to (e.g. /dev/sda): " disk
+  fi
+  boot_module="
+    boot.loader.grub.enable = true;
+    boot.loader.grub.device = \"$disk\";"
+fi
+
+luks_device_lines() {
+  local line name type uuid pkname
+  local -A uuid_by_name=()
+  while IFS= read -r line; do
+    name='' type='' uuid=''
+    for field in $line; do
+      case "$field" in
+      NAME=*) name=${field#NAME=}; name=${name//\"/} ;;
+      TYPE=*) type=${field#TYPE=}; type=${type//\"/} ;;
+      UUID=*) uuid=${field#UUID=}; uuid=${uuid//\"/} ;;
+      esac
+    done
+    [ -n "$name" ] && uuid_by_name["$name"]="$uuid"
+  done < <(lsblk -P -o NAME,TYPE,UUID 2>/dev/null || true)
+  while IFS= read -r line; do
+    name='' type='' uuid='' pkname=''
+    for field in $line; do
+      case "$field" in
+      NAME=*) name=${field#NAME=}; name=${name//\"/} ;;
+      TYPE=*) type=${field#TYPE=}; type=${type//\"/} ;;
+      UUID=*) uuid=${field#UUID=}; uuid=${uuid//\"/} ;;
+      PKNAME=*) pkname=${field#PKNAME=}; pkname=${pkname//\"/} ;;
+      esac
+    done
+    [ "$type" = "crypt" ] || continue
+    [ -n "$name" ] || continue
+    if [ -n "$pkname" ] && [ -n "${uuid_by_name[$pkname]:-}" ]; then
+      uuid="${uuid_by_name[$pkname]}"
+    fi
+    [ -n "$uuid" ] || continue
+    if printf '%s\n' "$raw" | grep -Fq "boot.initrd.luks.devices.\"$name\""; then
+      continue
+    fi
+    printf '    boot.initrd.luks.devices."%s".device = "/dev/disk/by-uuid/%s";\n' "$name" "$uuid"
+  done < <(lsblk -P -o NAME,TYPE,UUID,PKNAME 2>/dev/null || true)
+}
+
+boot_luks="$(luks_device_lines)"
+if [ -n "$boot_luks" ]; then
+  boot_module="$boot_module
+$boot_luks"
+fi
+
+FACTER="$(python3 "$HELPER" --root "$REPO_ROOT" --non-interactive facter)"
+facter_ok=0
+if command -v nixos-facter >/dev/null 2>&1; then
+  echo "generate-hw: running nixos-facter"
+  if [ "$(id -u)" -eq 0 ]; then
+    if facter_json="$(nixos-facter)"; then
+      printf '%s\n' "$facter_json" >"$FACTER"
+      facter_ok=1
+    fi
+  elif command -v sudo >/dev/null 2>&1; then
+    echo "generate-hw: nixos-facter needs root; using sudo"
+    if facter_json="$(sudo nixos-facter)"; then
+      printf '%s\n' "$facter_json" >"$FACTER"
+      facter_ok=1
+    fi
+  else
+    echo "generate-hw: nixos-facter needs root and sudo is unavailable; keeping the existing $FACTER" >&2
+  fi
+  if [ "$facter_ok" -ne 1 ]; then
+    echo "generate-hw: could not write $FACTER; the profile will be auto/unmatched" >&2
+  fi
+else
+  echo "generate-hw: nixos-facter not found; not writing $FACTER" >&2
+fi
+
+{
+  printf '# Generated by scripts/generate-hw.sh. Do not edit by hand.\n'
+  printf '{ self, inputs, ... }: {\n\n'
+  printf '  flake.modules.nixos.system-hardware =\n'
+  printf '%s\n' "$raw" | sed 's/^/    /'
+  printf '  ;\n\n'
+  printf '  flake.modules.nixos.system-bootloader = {\n'
+  printf '%s\n' "$boot_module"
+  printf '\n  };\n\n}\n'
+} >"$OUT"
+
+python3 "$HELPER" --root "$REPO_ROOT" --non-interactive ensure-imports \
+  --name system-hardware --name system-bootloader >/dev/null
+
+echo "generate-hw: wrote $OUT (bootloader: $bootloader)"

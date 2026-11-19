@@ -41,6 +41,38 @@ in
     installReport = {
       enable = pkgs.lib.mkEnableOption "the install report job group";
     };
+
+    extraRepositories = lib.mkOption {
+      type = lib.types.listOf (
+        lib.types.submodule {
+          options = {
+            name = lib.mkOption {
+              type = lib.types.str;
+              description = "Repository name used in the jobset name.";
+            };
+
+            url = lib.mkOption {
+              type = lib.types.str;
+              description = "Flake ref or git URL, for example github:me/ojuny-template.";
+            };
+
+            ref = lib.mkOption {
+              type = lib.types.str;
+              default = "";
+              description = "Branch or revision. Appended to github:, gitlab: and sourcehut: refs; passed as ?ref= otherwise.";
+            };
+
+            groups = lib.mkOption {
+              type = lib.types.str;
+              default = "checks";
+              description = "Space-separated job groups, for example \"checks vmTests\".";
+            };
+          };
+        }
+      );
+      default = [ ];
+      description = "Repositories outside the standard Ojuny set, for forks and revision-specific CI.";
+    };
   };
 
   config = {
@@ -64,6 +96,9 @@ in
 
     /* @option widget = "switch"; label = "Install report"; group = "Job groups"; */
     ci.jobs.installReport.enable = true;
+
+    /* @option widget = "table-list"; label = "Extra repositories"; columns = [ "name" "url" "ref" "groups" ]; columnTypes = [ "str" "str" "str" "str" ]; addLabel = "Add repository"; group = "Repositories"; description = "Full flake ref or git URL. The ref is appended to github:, gitlab: and sourcehut: refs and passed as ?ref= otherwise. Groups are space-separated."; */
+    ci.jobs.extraRepositories = [ ];
 
     systemd.services.ojuny-ci-jobsets = lib.mkIf config.ci.hydra.enable {
       description = "Upsert the Ojuny Hydra project and declarative jobset";

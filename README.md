@@ -16,14 +16,41 @@ your workstation, then provision or update the server.
 The server has no graphical interface. The settings GUI runs on your
 workstation and edits this flake. A web GUI or SSH proxy is out of scope.
 
+## Deploy methods
+
+This repository follows the Ojuny template shape, so the standard install and
+deploy surfaces work for it.
+
+- `nix run .#setup` clones a fork and writes the account, hostname and disk
+  settings.
+- `nix run .#remote-setup -- --target root@server` updates a running NixOS or
+  Ojuny machine over SSH with deploy-rs.
+- `nix run .#remote-install -- --target root@server --disk /dev/vda` prepares a
+  disko repository and installs a fresh machine with nixos-anywhere.
+- `nix run .#prepare-remote-repository -- --disk /dev/vda` writes a prepared
+  repository for a later remote install.
+- `nix run .#check` runs the template check.
+
+The Calamares installer and the CLI installer find the configuration through
+`flake.modules.nixos.system-configuration`, `users`, `host-imports`,
+`system-hardware` and `system-bootloader`, so either installer ISO can install
+this template.
+
+## CI repositories
+
+The standard jobset list is in `lib/jobsets.nix`. Set `ci.git.username` to your
+own account or organization to test forks of the standard repositories, or add
+a row to `ci.jobs.extraRepositories` to test any other repository and revision.
+
 ## Quickstart
 
 1. Install `nix-settings-gui` on the workstation.
 2. Open this flake and set `ci.git.username` to your Git user or organization.
 3. Set `ci.ssh.authorizedKeys`.
 4. Set `ci.hydra.adminPasswordHash` to an Argon2id hash.
-5. Save the flake.
-6. Provision a fresh server:
+5. Optionally add `ci.jobs.extraRepositories` rows for forks and test branches.
+6. Save the flake.
+7. Provision a fresh server:
 
 ```console
 $ nix run .#provision -- --target root@server
