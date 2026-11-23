@@ -9,8 +9,8 @@ this flake. The server receives the built system only.
 2. Open `~/repos/ojuny-ci-server` in the GUI.
 3. Change a setting.
 4. Save.
-5. Run `nix run .#install -- --target root@server` or
-   `nix run .#provision -- --target root@server --disk /dev/vda`.
+5. Run `nix run .#install -- --target <user>@server` or
+   `nix run .#provision -- --target <user>@server`.
 
 The GUI writes the annotated defaults in `nixos/`. The option declarations and
 the annotated defaults are in plain attribute sets so the controls render.
@@ -22,6 +22,11 @@ precedence over the `lib.mkDefault` values that follow the GUI options, so keep
 `ci.hostName` equal to the installed hostname when Hydra URLs must match it.
 The Disk page drives the disko layout for `provision`; an installer ISO uses the
 layout chosen in the installer.
+
+Setup and the installer both write `modules/00-user.nix` before evaluation.
+`ci.adminUser` is derived from the account in that file, so the account name is
+not a GUI setting. `nixos/users.nix` applies the password hash and SSH keys from
+the GUI to the derived account.
 
 ## The central setting
 
@@ -63,12 +68,24 @@ names. The row appears under Jobs in the GUI.
 ## Git host and protocol
 
 - `ci.git.host` defaults to `github.com`.
-- `ci.git.protocol` is `https` or `ssh`.
-- `ci.git.tokenFile` is an optional netrc file for private repositories.
+- `ci.git.protocol` is `https`. The ssh path is not supported because it has no
+  key or host-key handling.
+- `ci.git.tokenFile` is an optional netrc file for private repositories. It is
+  set as `nix.settings.netrc-file`.
+
+## Hydra sizing
+
+- `ci.hydra.maxJobs = 0` uses dynamic PSI scheduling with no cap. A positive
+  value caps the builder with `DynamicWithMaxJobLimit`.
+- `ci.hydra.maxOutputSize = 0` disables the per-output cap.
+- `ci.hydra.minimumDiskFree` and `ci.hydra.minimumDiskFreeEvaluator` stop the
+  queue runner and evaluator when the store is low.
+- The builder uses every local core per build (`buildCores = 0`).
 
 ## Administrator
 
-- `ci.adminUser` is the system and Hydra administrator name.
+- `ci.adminUser` is derived from the account module written by setup or the
+  installer. It is the system and Hydra administrator name.
 - `ci.adminHashedPassword` is the system password hash. Use SSH keys.
 - `ci.ssh.authorizedKeys` are the allowed keys.
 - `ci.hydra.adminPasswordHash` is a Hydra Argon2id hash.

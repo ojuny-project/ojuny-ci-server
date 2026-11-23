@@ -7,6 +7,12 @@
 
 { lib, ... }:
 
+let
+  primaryUser = import ../lib/primary-user.nix {
+    inherit lib;
+    text = builtins.readFile ../modules/00-user.nix;
+  };
+in
 {
   options.ci = {
     git = {
@@ -23,12 +29,9 @@
       };
 
       protocol = lib.mkOption {
-        type = lib.types.enum [
-          "https"
-          "ssh"
-        ];
+        type = lib.types.enum [ "https" ];
         default = "https";
-        description = "Protocol used to build repository URLs.";
+        description = "Protocol used to build repository URLs. Only https is supported; private repositories use ci.git.tokenFile.";
       };
 
       tokenFile = lib.mkOption {
@@ -109,7 +112,7 @@
     /* @option widget = "text"; label = "Git host"; group = "Git"; */
     ci.git.host = "github.com";
 
-    /* @option widget = "dropdown"; choices = [ "https" "ssh" ]; label = "Git protocol"; group = "Git"; */
+    /* @option widget = "dropdown"; choices = [ "https" ]; label = "Git protocol"; group = "Git"; description = "Private repositories use the token file."; */
     ci.git.protocol = "https";
 
     /* @option widget = "path"; label = "Git token file"; group = "Git"; advanced = true; nullable = true; */
@@ -130,8 +133,8 @@
     /* @option widget = "text"; label = "Locale"; group = "Host"; */
     ci.locale = "en_US.UTF-8";
 
-    /* @option widget = "text"; label = "Admin user"; group = "Administrator"; */
-    ci.adminUser = "admin";
+    # Derived from the account written by setup or the installer.
+    ci.adminUser = lib.mkDefault primaryUser;
 
     /* @option widget = "text"; label = "Admin password hash"; group = "Administrator"; advanced = true; */
     ci.adminHashedPassword = "!";

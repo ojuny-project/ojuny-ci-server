@@ -3,11 +3,22 @@
 ## Hydra does not start
 
 ```console
-$ systemctl status hydra
-$ journalctl -u hydra -u postgresql
+$ systemctl status hydra-server
+$ journalctl -u hydra-server -u postgresql
 ```
 
 Check that PostgreSQL is running and that the Hydra database exists.
+
+## Builds stay queued
+
+```console
+$ systemctl status hydra-builder
+$ journalctl -u hydra-builder -u hydra-queue-runner
+```
+
+The new Hydra architecture builds only through a builder agent. The server runs
+one local builder. It admits jobs while CPU and memory PSI are below the builder
+thresholds. If PSI is unavailable, it falls back to `load1Threshold`.
 
 ## The jobset does not appear
 
@@ -32,7 +43,8 @@ $ sudo systemctl start ojuny-ci-jobsets
 
 - Check `ci.cache.port` is the same on every host.
 - Check the hosts are on the same subnet or in `ci.cache.discovery.ranges`.
-- Check the firewall on `ci.network.interface`.
+- Check `ci.cache.openFirewall` is on; the cache port is opened only by
+  `nix-cache-discovery`, not by the network module.
 - `curl http://<host>:5055/nix-cache-info` from a peer.
 
 ## A mount fails
@@ -49,7 +61,7 @@ The `options-coverage` check catches this.
 
 ## Provision fails
 
-- Check SSH access to the target.
+- Check SSH access to the target as the main account, not root.
 - Check the disk name.
 - Use `--dry-run` to print the command.
 - Check `nixos-anywhere` output for the failing phase.

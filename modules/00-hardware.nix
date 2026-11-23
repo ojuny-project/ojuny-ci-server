@@ -1,4 +1,4 @@
-{ ... }:
+{ self, ... }:
 
 {
   flake.modules.nixos.system-hardware = {
@@ -6,8 +6,6 @@
   };
 
   flake.modules.nixos.system-bootloader = {
-    imports = [
-      ../nixos/disk-backend.nix
-    ];
+    imports = [ self.modules.nixos.disko ];
   };
 }

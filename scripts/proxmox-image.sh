@@ -37,7 +37,7 @@ if [ ! -f "$flake/flake.nix" ]; then
   exit 1
 fi
 
-command=(nixos-generate -f proxmox -c "$host" --flake "$flake" -o "$output")
+command=(nixos-generate -f proxmox --flake "$flake#$host" -o "$output")
 
 if [ "$dry_run" -eq 1 ]; then
   printf '%q ' "${command[@]}"

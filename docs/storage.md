@@ -3,7 +3,8 @@
 ## Default
 
 The server works on a single disk. Artifacts live under
-`ci.storage.artifactsPath`, default `/var/lib/ojuny-ci/artifacts`.
+`ci.storage.artifactsPath`, default `/var/lib/ojuny-ci/artifacts`. The path is
+owned by the `ojuny-ci` system user, not the login account.
 
 The Nix store and PostgreSQL stay on local block storage.
 

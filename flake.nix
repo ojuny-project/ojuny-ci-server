@@ -345,7 +345,7 @@
         deploy.nodes = builtins.mapAttrs (
           name: configuration: {
             hostname = name;
-            sshUser = "root";
+            sshUser = configuration.config.ci.adminUser;
             profiles.system = {
               user = "root";
               path =
@@ -355,7 +355,9 @@
           }
         ) self.nixosConfigurations;
 
-        hydraJobs = self.checks;
+        hydraJobs = {
+          x86_64-linux = self.checks.x86_64-linux;
+        };
 
         formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.nixfmt);
       };

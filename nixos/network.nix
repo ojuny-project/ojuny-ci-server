@@ -88,9 +88,7 @@
     networking.defaultGateway = lib.mkIf (config.ci.network.mode == "static") config.ci.network.gateway;
     networking.nameservers = lib.mkIf (config.ci.network.mode == "static") config.ci.network.dns;
 
-    networking.firewall.interfaces.${config.ci.network.interface}.allowedTCPPorts = [
-      config.ci.hydra.port
-      config.ci.cache.port
-    ];
+    networking.firewall.interfaces.${config.ci.network.interface}.allowedTCPPorts =
+      lib.optionals config.ci.hydra.enable [ config.ci.hydra.port ];
   };
 }

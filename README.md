@@ -7,10 +7,10 @@ your workstation, then provision or update the server.
 ## What it provides
 
 - Hydra with a declarative jobset generated from the flake settings
+- A local Hydra builder with dynamic PSI scheduling
 - `nix-cache-discovery` for the server store and LAN peers
 - PostgreSQL for Hydra
 - Optional extra filesystems for artifacts, release staging and archival
-- Optional remote builders
 - `nixos-anywhere`, existing-device and Proxmox install paths
 
 The server has no graphical interface. The settings GUI runs on your
@@ -23,13 +23,14 @@ deploy surfaces work for it.
 
 - `nix run .#setup` clones a fork and writes the account, hostname and disk
   settings.
-- `nix run .#remote-setup -- --target root@server` updates a running NixOS or
-  Ojuny machine over SSH with deploy-rs.
-- `nix run .#remote-install -- --target root@server --disk /dev/vda` prepares a
-  disko repository and installs a fresh machine with nixos-anywhere.
-- `nix run .#prepare-remote-repository -- --disk /dev/vda` writes a prepared
-  repository for a later remote install.
+- `nix run .#provision -- --target <user>@server` installs a fresh machine with
+  nixos-anywhere. `<user>` is the main account created by setup or the installer.
+- `nix run .#install -- --target <user>@server` updates a running NixOS machine,
+  or run it locally on the server.
 - `nix run .#check` runs the template check.
+
+`remote-setup` and `remote-install` are being replaced by a new remote-deploy
+method. The existing apps stay buildable but are not the supported path.
 
 The Calamares installer and the CLI installer find the configuration through
 `flake.modules.nixos.system-configuration`, `users`, `host-imports`,
@@ -50,22 +51,29 @@ a row to `ci.jobs.extraRepositories` to test any other repository and revision.
 4. Set `ci.hydra.adminPasswordHash` to an Argon2id hash.
 5. Optionally add `ci.jobs.extraRepositories` rows for forks and test branches.
 6. Save the flake.
-7. Provision a fresh server:
+7. Run `nix run .#setup` to write the main account, then install:
 
 ```console
-$ nix run .#provision -- --target root@server
+$ nix run .#provision -- --target <user>@server
 ```
+
+`<user>` is the account written by setup. Root login stays disabled.
 
 Or install on an existing NixOS or Ojuny device:
 
 ```console
-$ nix run .#install -- --target root@server
+$ nix run .#install -- --target <user>@server
 ```
+
+Or boot an ojuny-installer ISO. The installer writes the account module and the
+flake derives `ci.adminUser` from it.
 
 ## Requirements
 
 - Nix with flakes enabled.
-- A trusted LAN. Hydra and the cache are LAN-only by default.
+- A trusted LAN. Hydra is limited to `ci.network.interface`; the cache is limited
+  to the ranges opened by `nix-cache-discovery`.
+- PSI support (`/proc/pressure`) for the dynamic builder scheduler.
 - KVM on the server for VM tests.
 - Enough disk for the ISO jobs if they are enabled.
 
@@ -88,4 +96,3 @@ $ nix run .#install -- --target root@server
 - Issues: <https://github.com/ojuny-project/ojuny-ci-server/issues>
 - Contributing: [CONTRIBUTING.md](CONTRIBUTING.md)
 - Security: [SECURITY.md](SECURITY.md)
-

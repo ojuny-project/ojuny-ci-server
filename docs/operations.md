@@ -4,7 +4,7 @@
 
 ```console
 $ nix flake update
-$ nix run .#install -- --target root@server
+$ nix run .#install -- --target <user>@server
 ```
 
 The server is a rolling flake. The lock is the snapshot.
@@ -39,18 +39,20 @@ Restore into an empty database before starting Hydra.
 ## Garbage collection
 
 `nix.gc` runs weekly and deletes generations older than 30 days. Adjust it in
-`modules/system.nix` if the ISO jobs need a longer window.
+`nixos/system.nix` if the ISO jobs need a longer window.
 
 ## Logs
 
 ```console
-$ journalctl -u hydra -u hydra-queue-runner -u ojuny-ci-jobsets
+$ journalctl -u hydra-server -u hydra-queue-runner -u hydra-builder -u ojuny-ci-jobsets
 $ journalctl -u nix-cache-discovery
 ```
 
 ## Health checks
 
-- `systemctl status hydra`
+- `systemctl status hydra-server`
+- `systemctl status hydra-queue-runner`
+- `systemctl status hydra-builder`
 - `systemctl status nix-cache-discovery`
 - `systemctl status ojuny-ci-jobsets`
 - `curl http://<host>:3000`

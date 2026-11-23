@@ -33,4 +33,17 @@ graphical VM and is the heaviest single job.
 ## Disk reserve
 
 Keep at least 20 percent free on the local disk. Hydra, PostgreSQL and the Nix
-store all grow. Set `ci.hydra.maxOutputSize` and `nix.gc` to match the disk.
+store all grow. `ci.hydra.minimumDiskFree` stops the queue runner and
+`ci.hydra.minimumDiskFreeEvaluator` stops the evaluator when the store is low.
+The builder also has percentage store and build-dir thresholds.
+
+## Dynamic sizing
+
+The builder is not sized for one machine. `buildCores = 0` gives each build every
+local core, `nix.settings.max-jobs = "auto"` and `cores = 0` use the local core
+count, and `machineFreeFn = Dynamic` admits jobs from CPU and memory PSI.
+`ci.hydra.maxOutputSize = 0` disables the per-output cap. The same closure works
+on a small host and on a large one without a rebuild.
+
+PSI must be available (`/proc/pressure`). Without it, the builder falls back to
+`load1Threshold`, which does not scale with core count.

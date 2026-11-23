@@ -28,7 +28,12 @@ Optional:
 - `ci.git.repositories` if a repository name differs
 - `ci.jobs.extraRepositories` for forks and revision-specific CI
 - `ci.storage.mounts` for extra local or network filesystems
-- `ci.builders` for remote builders
+
+`ci.adminUser` is not set here. It is derived from the account module written by
+setup or the installer.
+
+Remote builders are not listed on the server. A builder host runs
+`services.hydra-builder` and connects to the queue runner gRPC endpoint.
 
 ## 3. Evaluate the flake
 
@@ -56,23 +61,23 @@ the first thing to run when server access returns.
 ## 5. Dry-run the deployment
 
 ```console
-$ nix run .#provision -- --target root@server --dry-run
+$ nix run .#provision -- --target <user>@server --dry-run
 ```
 
-Confirm the flake, host, target and disk. The disk must match
-`ci.disk.device`.
+Confirm the flake, host, target and disk. `<user>` is the account written by
+setup or the installer. The disk must match `ci.disk.device`.
 
 ## 6. Provision
 
 ```console
-$ nix run .#provision -- --target root@server
+$ nix run .#provision -- --target <user>@server
 ```
 
 ## 7. First boot
 
 ```console
-$ ssh root@server
-$ systemctl status hydra hydra-queue-runner nix-cache-discovery ojuny-ci-jobsets
+$ ssh <user>@server
+$ systemctl status hydra-server hydra-queue-runner hydra-builder nix-cache-discovery ojuny-ci-jobsets
 $ curl http://127.0.0.1:3000
 $ curl http://127.0.0.1:5055/nix-cache-info
 ```
@@ -93,11 +98,16 @@ These are implemented but not runtime-tested:
 - `hydra-create-user`, `psql` and `hydra-prepare-declarative-jobset` in
   `ojuny-ci-jobsets.service`
 - the jobset grouping and `hydraJobs` evaluation
+- the dynamic PSI scheduling of the local `hydra-builder`
+- the installer ISO install and the derived `ci.adminUser`
 - the disko layout on the target disk
 - the Proxmox image
 - the aarch64 configuration
 - cache discovery from a second host
-- network filesystem mounts and remote builders
+- network filesystem mounts
+
+Remote builders are deferred to the new remote-deploy method. They are not
+configured on the server.
 
 They are not blockers for a first deployment except where the checklist above
 fails.

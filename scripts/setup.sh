@@ -47,6 +47,6 @@ git add -A
 
 echo
 echo "setup: done. Provision a fresh server with:"
-echo "  nix run .#provision -- --target root@server"
+echo "  nix run .#provision -- --target <user>@server"
 echo "Or install on an existing machine with:"
-echo "  nix run .#install -- --target root@server"
+echo "  nix run .#install -- --target <user>@server"

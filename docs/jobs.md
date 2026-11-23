@@ -45,7 +45,8 @@ ci.git.repositories = {
    `hydra-prepare-declarative-jobset`.
 
 The same service runs daily from `ojuny-ci-jobsets.timer`, so a settings
-change is picked up without a reboot.
+change is picked up without a reboot. The service is a oneshot that exits after
+the upsert, so both the timer and `systemctl start` can run it again.
 
 Inspect the generated jobset without a server:
 
@@ -53,6 +54,18 @@ Inspect the generated jobset without a server:
 $ nix build .#packages.x86_64-linux.jobsets-json
 $ nix store cat result
 ```
+
+## Builders
+
+The server runs one local `hydra-builder`. It uses `buildCores = 0`, so each
+build gets every local core, and the queue runner uses `Dynamic` admission, so
+CPU and memory PSI decide how many jobs run. `ci.hydra.maxJobs = 0` means no
+cap. A positive value switches to `DynamicWithMaxJobLimit`.
+
+Remote builders are not configured on the server. A builder host runs
+`services.hydra-builder` with `queueRunnerAddr` pointing at the queue runner
+gRPC endpoint. Provisioning those hosts belongs to the new remote-deploy
+method.
 
 ## Extra repositories
 

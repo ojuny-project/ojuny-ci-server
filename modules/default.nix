@@ -9,16 +9,15 @@
       self.modules.nixos.system-bootloader
       ../nixos/settings.nix
       ../nixos/system.nix
+      ../nixos/users.nix
       ../nixos/network.nix
       ../nixos/disk.nix
       ../nixos/storage.nix
       ../nixos/storage-backend.nix
       ../nixos/cache.nix
       ../nixos/hydra.nix
+      ../nixos/builder.nix
       ../nixos/jobsets.nix
-      ../nixos/builders.nix
-      ../nixos/builders-backend.nix
-      inputs.disko.nixosModules.disko
       inputs.nix-cache-discovery.nixosModules.default
     ];
   };

@@ -6,6 +6,7 @@ let
     inputs.nixpkgs.lib.nixosSystem {
       inherit system;
       modules = [
+        { nixpkgs.hostPlatform = system; }
         self.modules.nixos.host-imports
       ];
     };

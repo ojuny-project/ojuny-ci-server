@@ -25,6 +25,13 @@ scripts, state the manual test you ran in the pull request.
 - Keep the five installer modules declared: `host-imports`,
   `system-configuration`, `users`, `system-hardware` and `system-bootloader`.
   The `checks.template` gate runs the Ojuny template check.
+- Keep the disko module and devices in `modules/00-disk.nix`, imported by
+  `system-bootloader`. The installer rewrites `00-hardware.nix`, so a disko
+  import in `host-imports` breaks the installer path.
+- Keep the admin wiring in `host-imports` via `nixos/users.nix`. Do not put it
+  in the installer-rewritten `users` module.
+- `ci.adminUser` is derived from `modules/00-user.nix`. Do not write it from
+  setup or the installer; write the account module instead.
 - Do not commit secrets. Use the documented file-based options.
 - Do not add a hardcoded organization or repository owner.
 - Do not make a heavy job a required path for a default deployment.
@@ -38,8 +45,8 @@ $ nix build .#checks.x86_64-linux.default
 ```
 
 The checks include `settings-eval`, `jobsets-schema`, `storage-assertions`,
-`options-coverage` and `template`. `options-coverage` also runs the
-`check-menu-coverage` gate.
+`options-coverage`, `template`, `installer-ownership` and `primary-user`.
+`options-coverage` also runs the `check-menu-coverage` gate.
 
 ## Issues
 

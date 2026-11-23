@@ -21,7 +21,7 @@ Options:
   --flake URL|PATH      Template or fork with nixosConfigurations and deploy
                         nodes (default: the running template)
   --host NAME           nixosConfigurations name (default: the only host)
-  --target USER@HOST    SSH target (default: root@NAME)
+  --target USER@HOST    SSH target (default: ci.adminUser@NAME)
   --ssh-user USER       SSH user override
   --remote-build        Build on the target instead of the local machine
   --dry-run             Print the deploy command without running it
@@ -106,7 +106,12 @@ if [ -z "$host" ]; then
 fi
 
 if [ -z "$target" ]; then
-  target="root@$host"
+  default_user="$(nix eval --raw "$flake_ref#nixosConfigurations.$host.config.ci.adminUser" 2>/dev/null || true)"
+  if [ -z "$default_user" ]; then
+    echo "remote-setup: pass --target USER@HOST; the flake has no ci.adminUser" >&2
+    exit 1
+  fi
+  target="$default_user@$host"
 fi
 
 target_user="${target%@*}"

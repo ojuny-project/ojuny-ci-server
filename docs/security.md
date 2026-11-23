@@ -2,11 +2,15 @@
 
 ## Defaults
 
-- Hydra and the cache are opened only on `ci.network.interface`.
+- Hydra is opened only on `ci.network.interface`.
+- The cache port is opened only when `ci.cache.openFirewall` is on, and then
+  only to private, link-local and unique-local ranges.
 - SSH is the only globally opened port.
-- Root SSH login is disabled.
+- Root SSH login is disabled. The main account created by setup or the installer
+  is the administrator.
 - The administrator uses SSH keys.
 - The Hydra administrator password is an Argon2id hash.
+- `ci.adminUser` is derived from the generated account module.
 
 ## Public exposure
 
@@ -22,10 +26,12 @@ scope because they turn a local edit into a remote privileged interface.
 
 ## Secrets
 
-- Git token: `ci.git.tokenFile` is a netrc file consumed by Nix.
+- Git token: `ci.git.tokenFile` is a netrc file set as `nix.settings.netrc-file`.
 - SSH keys: `ci.ssh.authorizedKeys`.
 - Hydra admin: `ci.hydra.adminPasswordHash`.
-- Builder keys: `ci.builders.*.sshKey`.
+- Builder authentication: remote builders use the queue runner gRPC endpoint
+  with the builder `authorizationFile` or mTLS. This is part of the new
+  remote-deploy work.
 
 Do not commit plaintext secrets. Use files with restrictive permissions.
 

@@ -104,7 +104,7 @@ in
       description = "Upsert the Ojuny Hydra project and declarative jobset";
       after = [
         "hydra-init.service"
-        "hydra.service"
+        "hydra-server.service"
         "postgresql.service"
       ];
       requires = [
@@ -112,7 +112,6 @@ in
         "postgresql.service"
       ];
       wantedBy = [ "multi-user.target" ];
-      environment.HYDRA_CONFIG = "/etc/hydra/hydra.conf";
       path = [
         pkgs.coreutils
         pkgs.nix
@@ -121,7 +120,6 @@ in
       ];
       serviceConfig = {
         Type = "oneshot";
-        RemainAfterExit = true;
         User = "hydra";
         Group = "hydra";
       };

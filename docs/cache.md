@@ -19,7 +19,9 @@ On a LAN with discovery, clients usually do not need the URL directly.
 client allowlist. Set it off to use `ci.cache.discovery.ranges`.
 
 `ci.cache.openFirewall` opens the cache port to the private, link-local and
-unique-local ranges. It never opens the port to internet addresses.
+unique-local ranges. It never opens the port to internet addresses. The network
+module does not open the cache port, so this is the only switch for cache
+reachability.
 
 ## Trust
 

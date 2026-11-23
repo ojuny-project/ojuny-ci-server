@@ -35,6 +35,9 @@
       "root"
       config.ci.adminUser
     ];
+    max-jobs = lib.mkDefault "auto";
+    cores = lib.mkDefault 0;
+    netrc-file = lib.mkIf (config.ci.git.tokenFile != null) config.ci.git.tokenFile;
   };
 
   nix.gc = {

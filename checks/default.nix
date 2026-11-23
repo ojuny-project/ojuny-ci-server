@@ -12,6 +12,21 @@ let
     cp ${root}/scripts/flake_structure.py $out/flake_structure.py
   '';
 
+  primaryUserNested = import ../lib/primary-user.nix {
+    lib = pkgs.lib;
+    text = "users.users = { den = { }; };";
+  };
+
+  primaryUserDirect = import ../lib/primary-user.nix {
+    lib = pkgs.lib;
+    text = "users.users.den = { };";
+  };
+
+  primaryUserFallback = import ../lib/primary-user.nix {
+    lib = pkgs.lib;
+    text = "{ imports = [ ../nixos/users.nix ]; }";
+  };
+
   groupNames = builtins.filter (
     name:
     builtins.isAttrs configuration.ci.jobs.${name}
@@ -57,6 +72,20 @@ let
       python3 ${checkSrc}/check-template.py --root ${root} --static
       touch $out
     '';
+
+    installer-ownership = pkgs.runCommand "check-installer-ownership" {
+      nativeBuildInputs = [ pkgs.python3 ];
+    } ''
+      python3 ${./installer_ownership.py} ${root}
+      touch $out
+    '';
+
+    primary-user = pkgs.runCommand "check-primary-user" { } ''
+      test "${primaryUserNested}" = "den"
+      test "${primaryUserDirect}" = "den"
+      test "${primaryUserFallback}" = "admin"
+      touch $out
+    '';
   };
 in
 checks
@@ -67,6 +96,8 @@ checks
     echo ${checks.storage-assertions} >/dev/null
     echo ${checks.options-coverage} >/dev/null
     echo ${checks.template} >/dev/null
+    echo ${checks.installer-ownership} >/dev/null
+    echo ${checks.primary-user} >/dev/null
     touch $out
   '';
 }

@@ -39,8 +39,15 @@ in
     ) config.ci.storage.mounts
   );
 
+  users.groups.ojuny-ci = { };
+
+  users.users.ojuny-ci = {
+    isSystemUser = true;
+    group = "ojuny-ci";
+  };
+
   systemd.tmpfiles.rules = [
-    "d ${config.ci.storage.artifactsPath} 0755 ${config.ci.adminUser} ${config.ci.adminUser} -"
+    "d ${config.ci.storage.artifactsPath} 0755 ojuny-ci ojuny-ci -"
   ];
 
   assertions = map (mount: {

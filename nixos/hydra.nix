@@ -34,15 +34,27 @@
     };
 
     maxJobs = lib.mkOption {
-      type = lib.types.int;
-      default = 4;
-      description = "Maximum concurrent Hydra build jobs.";
+      type = lib.types.ints.unsigned;
+      default = 0;
+      description = "Optional cap on concurrent builder jobs. 0 uses dynamic PSI scheduling with no cap.";
     };
 
     maxOutputSize = lib.mkOption {
-      type = lib.types.int;
-      default = 10737418240;
-      description = "Maximum output size in bytes.";
+      type = lib.types.ints.unsigned;
+      default = 0;
+      description = "Per-output NAR size limit in bytes. 0 disables the cap.";
+    };
+
+    minimumDiskFree = lib.mkOption {
+      type = lib.types.ints.unsigned;
+      default = 20;
+      description = "Stop the queue runner when /nix/store free space drops below this many GiB.";
+    };
+
+    minimumDiskFreeEvaluator = lib.mkOption {
+      type = lib.types.ints.unsigned;
+      default = 10;
+      description = "Stop the evaluator when /nix/store free space drops below this many GiB.";
     };
 
     useSubstitutes = lib.mkOption {
@@ -65,11 +77,17 @@
     /* @option widget = "text"; label = "Admin password hash"; group = "Hydra"; advanced = true; description = "Argon2id hash. Use hydra-create-user to generate one."; */
     ci.hydra.adminPasswordHash = "!";
 
-    /* @option widget = "spin"; label = "Max jobs"; group = "Queue"; min = 1; max = 256; */
-    ci.hydra.maxJobs = 4;
+    /* @option widget = "spin"; label = "Max jobs"; group = "Queue"; min = 0; max = 1024; description = "0 uses dynamic PSI scheduling."; */
+    ci.hydra.maxJobs = 0;
 
-    /* @option widget = "spin"; label = "Max output size"; group = "Queue"; min = 1048576; unit = "bytes"; */
-    ci.hydra.maxOutputSize = 10737418240;
+    /* @option widget = "spin"; label = "Max output size"; group = "Queue"; min = 0; unit = "bytes"; description = "0 disables the per-output cap."; */
+    ci.hydra.maxOutputSize = 0;
+
+    /* @option widget = "spin"; label = "Minimum disk free"; group = "Queue"; min = 0; unit = "GiB"; */
+    ci.hydra.minimumDiskFree = 20;
+
+    /* @option widget = "spin"; label = "Minimum disk free, evaluator"; group = "Queue"; min = 0; unit = "GiB"; */
+    ci.hydra.minimumDiskFreeEvaluator = 10;
 
     /* @option widget = "switch"; label = "Use substitutes"; group = "Queue"; */
     ci.hydra.useSubstitutes = true;
@@ -81,10 +99,13 @@
       port = config.ci.hydra.port;
       listenHost = config.ci.hydra.bindAddress;
       useSubstitutes = config.ci.hydra.useSubstitutes;
-      extraConfig = ''
-        max_output_size = ${toString config.ci.hydra.maxOutputSize}
-        max_workers = ${toString config.ci.hydra.maxJobs}
-      '';
+      minimumDiskFree = config.ci.hydra.minimumDiskFree;
+      minimumDiskFreeEvaluator = config.ci.hydra.minimumDiskFreeEvaluator;
+
+      queueRunner.settings = {
+        maxOutputSize = config.ci.hydra.maxOutputSize;
+        machineFreeFn = if config.ci.hydra.maxJobs > 0 then "DynamicWithMaxJobLimit" else "Dynamic";
+      };
     };
 
     services.postgresql.enable = config.ci.hydra.enable;
