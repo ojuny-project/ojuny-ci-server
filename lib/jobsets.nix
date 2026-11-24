@@ -27,6 +27,7 @@ let
       "ojuny-patches"
       "ojuny-test-flakes"
       "nix-cache-discovery"
+      "nix-connect"
       "nix-cleaner"
       "nix-settings-gui"
       "ojuny-welcome"
@@ -37,6 +38,7 @@ let
     ];
     vmTests = [
       "nix-cache-discovery"
+      "nix-connect"
       "ojuny-installer"
     ];
     isos = [ "ojuny-installer" ];

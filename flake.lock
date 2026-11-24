@@ -133,6 +133,26 @@
         "type": "github"
       }
     },
+    "nix-connect": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1795551126,
+        "narHash": "sha256-NZY9r0XX/QLT2r1D1zlv3ejawsjKhvIHeN1wBa5qpsk=",
+        "owner": "ojuny-project",
+        "repo": "nix-connect",
+        "rev": "d8e1ca3619528306c5263a21d53bb28e0e59d9a1",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ojuny-project",
+        "repo": "nix-connect",
+        "type": "github"
+      }
+    },
     "nix-vm-test": {
       "inputs": {
         "nixpkgs": [
@@ -258,6 +278,7 @@
         "flake-parts": "flake-parts",
         "import-tree": "import-tree",
         "nix-cache-discovery": "nix-cache-discovery",
+        "nix-connect": "nix-connect",
         "nixos-anywhere": "nixos-anywhere",
         "nixpkgs": "nixpkgs"
       }

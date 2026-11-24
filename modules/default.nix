@@ -15,10 +15,12 @@
       ../nixos/storage.nix
       ../nixos/storage-backend.nix
       ../nixos/cache.nix
+      ../nixos/connect.nix
       ../nixos/hydra.nix
       ../nixos/builder.nix
       ../nixos/jobsets.nix
       inputs.nix-cache-discovery.nixosModules.default
+      inputs.nix-connect.nixosModules.default
     ];
   };
 }
