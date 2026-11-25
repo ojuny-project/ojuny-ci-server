@@ -153,7 +153,7 @@ fi
 
 if [ -z "$host" ]; then
   host="$(nix eval --raw "$flake_ref#nixosConfigurations" \
-    --apply 'x: builtins.head (builtins.attrNames x)' 2>/dev/null || true)"
+    --apply 'x: builtins.head (builtins.attrNames x)'  || true)"
   if [ -z "$host" ]; then
     echo "remote-install: the flake has no nixosConfigurations; pass --host" >&2
     exit 1

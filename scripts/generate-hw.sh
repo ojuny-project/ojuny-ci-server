@@ -53,10 +53,10 @@ if [ "$bootloader" = efi ]; then
   boot_module='
     boot.loader.systemd-boot.enable = true;
     boot.loader.efi.canTouchEfiVariables = true;'
-  if findmnt -no SOURCE /efi >/dev/null 2>&1; then
-    boot_source="$(findmnt -no SOURCE /boot 2>/dev/null || true)"
+  if findmnt -no SOURCE /efi ; then
+    boot_source="$(findmnt -no SOURCE /boot  || true)"
     if [ -n "$boot_source" ] &&
-      [ "$(lsblk -no PARTTYPE "$boot_source" 2>/dev/null || true)" = "bc13c2ff-59e6-4262-a352-b275fd6f7172" ]; then
+      [ "$(lsblk -no PARTTYPE "$boot_source"  || true)" = "bc13c2ff-59e6-4262-a352-b275fd6f7172" ]; then
       boot_module="$boot_module
     boot.loader.efi.efiSysMountPoint = \"/efi\";
     boot.loader.systemd-boot.xbootldrMountPoint = \"/boot\";"
@@ -64,9 +64,9 @@ if [ "$bootloader" = efi ]; then
   fi
 else
   disk=""
-  root_source="$(findmnt -no SOURCE / 2>/dev/null || true)"
+  root_source="$(findmnt -no SOURCE /  || true)"
   if [ -n "$root_source" ]; then
-    parent="$(lsblk -no PKNAME "$root_source" 2>/dev/null | head -n1 || true)"
+    parent="$(lsblk -no PKNAME "$root_source"  | head -n1 || true)"
     if [ -n "$parent" ]; then disk="/dev/$parent"; else disk="$root_source"; fi
   fi
   if [ -z "$disk" ] && [ -f /etc/nixos/configuration.nix ]; then
@@ -93,7 +93,7 @@ luks_device_lines() {
       esac
     done
     [ -n "$name" ] && uuid_by_name["$name"]="$uuid"
-  done < <(lsblk -P -o NAME,TYPE,UUID 2>/dev/null || true)
+  done < <(lsblk -P -o NAME,TYPE,UUID  || true)
   while IFS= read -r line; do
     name='' type='' uuid='' pkname=''
     for field in $line; do
@@ -114,7 +114,7 @@ luks_device_lines() {
       continue
     fi
     printf '    boot.initrd.luks.devices."%s".device = "/dev/disk/by-uuid/%s";\n' "$name" "$uuid"
-  done < <(lsblk -P -o NAME,TYPE,UUID,PKNAME 2>/dev/null || true)
+  done < <(lsblk -P -o NAME,TYPE,UUID,PKNAME  || true)
 }
 
 boot_luks="$(luks_device_lines)"
@@ -125,14 +125,14 @@ fi
 
 FACTER="$(python3 "$HELPER" --root "$REPO_ROOT" --non-interactive facter)"
 facter_ok=0
-if command -v nixos-facter >/dev/null 2>&1; then
+if command -v nixos-facter ; then
   echo "generate-hw: running nixos-facter"
   if [ "$(id -u)" -eq 0 ]; then
     if facter_json="$(nixos-facter)"; then
       printf '%s\n' "$facter_json" >"$FACTER"
       facter_ok=1
     fi
-  elif command -v sudo >/dev/null 2>&1; then
+  elif command -v sudo ; then
     echo "generate-hw: nixos-facter needs root; using sudo"
     if facter_json="$(sudo nixos-facter)"; then
       printf '%s\n' "$facter_json" >"$FACTER"
@@ -160,6 +160,6 @@ fi
 } >"$OUT"
 
 python3 "$HELPER" --root "$REPO_ROOT" --non-interactive ensure-imports \
-  --name system-hardware --name system-bootloader >/dev/null
+  --name system-hardware --name system-bootloader 
 
 echo "generate-hw: wrote $OUT (bootloader: $bootloader)"

@@ -142,7 +142,7 @@ if [ -z "$hashed_password" ]; then
     echo
   fi
   if [ -n "$password" ]; then
-    hashed_password="$(mkpasswd -m yescrypt -- "$password" 2>/dev/null || mkpasswd -m sha-512 -- "$password")"
+    hashed_password="$(mkpasswd -m yescrypt -- "$password"  || mkpasswd -m sha-512 -- "$password")"
   else
     hashed_password="!"
   fi
@@ -281,7 +281,7 @@ imports=(--name system-configuration --name users --name system-hardware --name 
 if [ -f "$quirks" ]; then
   imports+=(--name system-hardware-quirks)
 fi
-python3 "$helper" --root "$root" --non-interactive ensure-imports "${imports[@]}" >/dev/null
+python3 "$helper" --root "$root" --non-interactive ensure-imports "${imports[@]}" 
 
 git -C "$root" init -q
 git -C "$root" add -A
