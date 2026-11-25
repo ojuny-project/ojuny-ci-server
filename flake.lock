@@ -140,11 +140,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795612441,
-        "narHash": "sha256-h3YmgvsaomoQEmvGPfHYoJT1KbPf/y/YOgw4KdpiafE=",
+        "lastModified": 1795613945,
+        "narHash": "sha256-SXac4YXqjqj8jy0Lm22BnbIWq6935mlaPixoqbMJkv4=",
         "owner": "ojuny-project",
         "repo": "nix-connect",
-        "rev": "a79865dec43d68b2e399e6a9e639e9333df78b22",
+        "rev": "a1599c853192a4c5f8e7b2757718031c9db78632",
         "type": "github"
       },
       "original": {
